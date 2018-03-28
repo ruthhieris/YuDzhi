@@ -5,7 +5,7 @@ YuDzhi 27.03.2018
 from sympy import Eijk, KroneckerDelta, sin, cos, zeros, pi
 #from sympy.abc import i,j#, theta
 import sympy as sp
-import numpy as np
+#import numpy as np
 sp.init_printing(use_unicode=True)
 
 def Rot_AngAx(n, theta):
@@ -20,7 +20,7 @@ def Rot_AngAx(n, theta):
     n = [nx,ny,nz]
     """
 
-    dimens = 3;
+    dimens = 3
     """
     R = sp.MatrixSymbol('R', dimens, dimens)
     """
@@ -32,7 +32,7 @@ def Rot_AngAx(n, theta):
         
     Rot = sp.Matrix(R)
 
-    R2 = sp.zeros(3)
+    R2 = sp.zeros(dimens)
     for i in range(dimens):
         R2.row_op(i, lambda v,j: (1-cos(theta)) * n[i]*n[j])
     Rot += R2
