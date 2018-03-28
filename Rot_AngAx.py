@@ -2,7 +2,7 @@
 """
 YuDzhi 27.03.2018
 """
-from sympy import Eijk, KroneckerDelta, sin, cos, zeros, pi
+from sympy import Eijk, KroneckerDelta, sin, cos, pi
 #from sympy.abc import i,j#, theta
 import sympy as sp
 #import numpy as np
