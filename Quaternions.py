@@ -6,6 +6,7 @@ Created on Tue Mar 27 23:45:00 2018
 @author: yudzhi
 """
 import numpy as np
+np.set_printoptions(precision = 3, suppress = True)
 
 class qt(object):
     """
@@ -32,6 +33,8 @@ class qt(object):
             self.init_abc(args[0], args[1], args[2], args[3])
         if len(args) == 2:
             self.init_AngAx(args[0], args[1])
+        if len(args) == 1:
+            self.init_Array(args[0])
             
     def __str__(self):
 #        return('<' + str(self._a) + " + " + str(self._b) + "i + " +
@@ -51,14 +54,20 @@ class qt(object):
         self._b = np.cos(ang/2) * ax[0]
         self._c = np.cos(ang/2) * ax[1]
         self._d = np.cos(ang/2) * ax[2]  
-                
+        
+    def init_Array(self, quatArray):
+        self._a = quatArray[0]
+        self._b = quatArray[1]
+        self._c = quatArray[2]
+        self._d = quatArray[3]
+                        
     def qdot(self, qt2):
         """Quaternion multiplication"""
         qt3_array = np.dot(self.qarray, qt2.qarray)
-        qt3 = self.qt_from_array(qt3_array)
+        qt3 = qt.qt_from_array(qt3_array)
         return qt3
     
-    def qt_from_array(self,qarray):
+    def qt_from_array(qarray):
         """find a,b,c,d from qt array"""
         a3 = qarray.real[0][0]
         b3 = qarray.real[1][0]
@@ -66,7 +75,23 @@ class qt(object):
         d3 = qarray.imag[1][0]
         qt3 = qt(a3,b3,c3,d3)
         return qt3
-        
+    
+    def qt_from_ScVec(u0,vec):
+        """Quaternion from scalar and vector components tuple (u0,vec)"""
+        a = u0
+        b = vec[0]
+        c = vec[1]
+        d = vec[2]
+        q = qt(a,b,c,d)
+        return q
+    
+    def qInverse(self):
+        qt_inv = qt.qt_from_ScVec(self.q0, - self.vec)
+        return qt_inv
+    
+    def qMod(self):
+        qt_module = self.qdot(self.qInverse())
+        return qt_module.q0
     
     @property
     def qarray(self):
@@ -94,6 +119,12 @@ class qt(object):
     def q3(self):
         """float: 3rd element of quaternion"""
         return self._d
+    
+    @property
+    def vec(self):
+        """Vector Component"""
+        self._vec = np.array([self.q1, self.q2, self.q3])
+        return self._vec
     """
     quaternion multiplication
     INPUT: qt1 = [a1,b1,c1,d1]
