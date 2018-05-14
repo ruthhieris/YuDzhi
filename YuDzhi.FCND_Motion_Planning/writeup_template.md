@@ -28,6 +28,18 @@ You're reading it! Below I describe how I addressed each rubric point and where 
 
 #### 1. Explain the functionality of what's provided in `motion_planning.py` and `planning_utils.py`
 These scripts contain a basic planning implementation that includes...
+**plan_path()** method:
+* setting home position
+* retrieving current global position and converting it to current local position
+* reading obstacle data
+* creating grid and placing *start* - *goal* points on it
+* A* path search implementation and subsequent wqypoints number minimizing
+
+**planning_utils.py** library includes:
+* `create_grid()` - grid representation of a 2D config space based on given obstacle data, drone alt and safety dist
+* `Action` class - valid actions enumeration when moving through the grid
+* `A-star` algorithm (2D, for grid representation) 
+* `heuristic` function - for cost estimation in a-star
 
 And here's a lovely image of my results (ok this image has nothing to do with it, but it's a nice example of how to include images in your writeup!)
 ![Top Down View](./misc/high_up.png)
