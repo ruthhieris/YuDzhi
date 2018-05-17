@@ -57,22 +57,34 @@ Here's | A | Snappy | Table
 Here students should read the first line of the csv file, extract lat0 and lon0 as floating point values and use the 
 self.set_home_position() method to set global home. Explain briefly how you accomplished this in your code.
 1. Open data-file
-1. Read and split the first line without \n: 'line = f.readline()[:-1].split(",")'
-1. Split each of two peaces to get float position values: 'lat0, lon0 = [float(l.split(" ")[-1]) for l in line]'
-1. Close file. 
-Could be done with 'pandas', but this package isn't included in FCND-environment.
+2. Read and split the first line without \n: `line = f.readline()[:-1].split(",")`
+3. Split each of two peaces to get float position values: `lat0, lon0 = [float(l.split(" ")[-1]) for l in line]`
+4. Close file. 
+Could be done with *pandas*, but this package isn't included in FCND-environment.
 
 #### 2. Set your current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
 
-1. Retrieve current global position 'self.global_position = [self._latitude, self._longitude, self._altitude]'
-1. Use 'utm.from_latlon' in utility method global_to_local(global_position, global_home)
-1. Convert Gl to Loc position 'self.local_position = global_to_local(self.global_position, self.global_home)'
-
-Meanwhile, here's a picture of me flying through the trees!
-![Forest Flying](./misc/in_the_trees.png)
+1. Retrieve current global position `self.global_position = [self._latitude, self._longitude, self._altitude]`
+2. Use `utm.from_latlon` in utility method global_to_local(global_position, global_home)
+3. Convert Gl to Loc position `self.local_position = global_to_local(self.global_position, self.global_home)`
 
 #### 3. Set grid start position from local position
+1. `def create_grid_and_edges(data, drone_altitude, safety_distance):
+    """
+    Returns a grid representation of a 2D configuration space
+    along with Voronoi graph edges given obstacle data and the
+    drone's altitude.
+    """
+    `
+2. Create the graph with the weight of the edges set to the Euclidean distance between the points
+        `G = nx.Graph()
+        for e in edges:
+            p1 = tuple(e[0])
+            p2 = tuple(e[1])
+            dist = np.linalg.norm(np.array(p2) - np.array(p1))
+            G.add_edge(p1, p2, weight=dist)`
+
 This is another step in adding flexibility to the start location. As long as it works you're good to go!
 
 #### 4. Set grid goal position from geodetic coords
@@ -97,4 +109,9 @@ It works!
 For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson. You could try implementing a vehicle model to take dynamic constraints into account, or implement a replanning method to invoke if you get off course or encounter unexpected obstacles.
 
 And here is a lovely picture of our downtown San Francisco environment from above!
-![Map of SF](./misc/map.png)
+![Probabilistic_gr](./planning_im/im_Prob_graph_time.png)
+
+Meanwhile, here's a picture of me flying through the trees!
+![Probabilistic_m](./planning_im/im_Prob_map.png)
+![Voronoi_gr](./planning_im/im_Vor_graph_time.png)
+![Voronoi_m](./planning_im/im_Vor_map.png)

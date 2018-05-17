@@ -5,11 +5,13 @@ from enum import Enum, auto
 
 import numpy as np
 
-from planning_utils import a_star, heuristic, create_grid, global_to_local
+from planning_utils import a_star, heuristic, create_grid, global_to_local, create_grid_and_edges
+from planning_utils import Sampler, start_goal_graph
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
-from udacidrone.frame_utils import global_to_local
+import networkx as nx
+#from udacidrone.frame_utils import global_to_local
 
 
 class States(Enum):
@@ -140,18 +142,59 @@ class MotionPlanning(Drone):
         
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
+        
+       
+            
         # Read in obstacle map
         data = np.loadtxt(filename, delimiter=',', dtype='Float64', skiprows=2)
         
         # Define a grid for a particular altitude and safety margin around obstacles
-        grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
-        print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
+        #grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
+        #print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
+        import time
+        t0 = time.time()
+        grid, edges = create_grid_and_edges(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
+        print('Found %5d edges' % len(edges))
+        #print(flight_altitude, safety_distance)
+        print('graph took {0} seconds to build'.format(time.time()-t0))
+        
+        # create the graph with the weight of the edges
+        # set to the Euclidean distance between the points
+        G = nx.Graph()
+        for e in edges:
+            p1 = tuple(e[0])
+            p2 = tuple(e[1])
+            dist = np.linalg.norm(np.array(p2) - np.array(p1))
+            G.add_edge(p1, p2, weight=dist)
+
+
         # Define starting point on the grid (this is just grid center)
         #grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center
+        
+        
+        
+        
+        
         grid_start = self.local_position
         # Set goal as some arbitrary position on the grid
-        grid_goal = (-north_offset + 10, -east_offset + 10)
+        #grid_goal = (-north_offset + 10, -east_offset + 10)
+        #Define a start and goal location
+        
+        #start_ne = Sampler.random_sample(data, flight_altitude, 1)
+        goal_ne = Sampler.random_sample(data, TARGET_ALTITUDE, 1,False)
+        #print("RandomStart", start_ne, "RandomGoal", goal_ne)
+        
+        
+        #place random start and goal points on graph
+        north_min = Sampler.datalimits(data)[0]
+        east_min = Sampler.datalimits(data)[2]
+        
+        #start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
+        goal_v = (goal_ne[0][0] - north_min, goal_ne[0][1] - east_min)
+        
+        gr_start, gr_goal = start_goal_graph(G, start_v, goal_v)
+        
         # TODO: adapt to set goal as latitude / longitude position and convert
 
         # Run A* to find a path from start to goal
