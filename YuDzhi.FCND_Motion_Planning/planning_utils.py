@@ -1,7 +1,26 @@
 from enum import Enum
 from queue import PriorityQueue
 import numpy as np
+import utm
 
+def global_to_local(global_position, global_home):
+    """
+    To convert a GPS position (longitude, latitude, altitude) to a local position 
+    (north, east, down) you need to define a global home position as the origin 
+    of your NED coordinate frame. In general this might be the position your 
+    vehicle is in when the motors are armed, or some other home base position. 
+    Convert from global position to a local position using the utm.
+    Input: global_position(lat,lon,alt), global_home(lat,lon,alt)
+    Output: [N,E,D]
+    """
+    
+    (east_home, north_home, _, _) = utm.from_latlon(global_home[1], global_home[0])
+    
+    (east, north, _, _) = utm.from_latlon(global_position[1], global_position[0])
+                                          
+    local_position = np.array([north - north_home, east - east_home, -(global_position[2] - global_home[2])])
+    
+    return local_position
 
 def create_grid(data, drone_altitude, safety_distance):
     """

@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 import numpy as np
 
-from planning_utils import a_star, heuristic, create_grid
+from planning_utils import a_star, heuristic, create_grid, global_to_local
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
@@ -111,38 +111,45 @@ class MotionPlanning(Drone):
         data = msgpack.dumps(self.waypoints)
         self.connection._master.write(data)
 
+    def set_home_position(self, filename):
+        # TODO: read lat0, lon0 from colliders into floating point values
+        #filename = 'colliders.csv'
+        f = open(filename)
+        line = f.readline()[:-1].split(',')
+        lat0, lon0 = [float(l.split(' ')[-1]) for l in line]
+        f.close()
+        alt0 = 0
+        #data0 = np.loadtxt(filename,skiprows = -1, usecols = (1,3) ,converters = 
+                          #{1:lambda s: np.char.strip(np.compat.asstr(s),',')})
+        return lat0, lon0, alt0
+    
     def plan_path(self):
         self.flight_state = States.PLANNING
         print("Searching for a path ...")
         TARGET_ALTITUDE = 5
         SAFETY_DISTANCE = 5
-
+        filename = 'colliders.csv'
         self.target_position[2] = TARGET_ALTITUDE
-
-        # TODO: read lat0, lon0 from colliders into floating point values
-        #filename = 'colliders.csv'
-        #data0 = np.loadtxt(filename,skiprows = -1, usecols = (1,3) ,converters = 
-                          #{1:lambda s: np.char.strip(np.compat.asstr(s),',')})
-        #print(data0)
-        
         # TODO: set home position to (lon0, lat0, 0)
+        self.global_home = self.set_home_position(filename)        
 
         # TODO: retrieve current global position
- 
+        self.global_position = [self._latitude, self._longitude, self._altitude]
         # TODO: convert to current local position using global_to_local()
+        self.local_position = global_to_local(self.global_position, self.global_home)
         
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
         # Read in obstacle map
-        data = np.loadtxt('colliders.csv', delimiter=',', dtype='Float64', skiprows=2)
+        data = np.loadtxt(filename, delimiter=',', dtype='Float64', skiprows=2)
         
         # Define a grid for a particular altitude and safety margin around obstacles
         grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
         # Define starting point on the grid (this is just grid center)
-        grid_start = (-north_offset, -east_offset)
+        #grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center
-        
+        grid_start = self.local_position
         # Set goal as some arbitrary position on the grid
         grid_goal = (-north_offset + 10, -east_offset + 10)
         # TODO: adapt to set goal as latitude / longitude position and convert
