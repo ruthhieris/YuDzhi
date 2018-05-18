@@ -56,11 +56,15 @@ Here's | A | Snappy | Table
 #### 1. Set your global home position
 Here students should read the first line of the csv file, extract lat0 and lon0 as floating point values and use the 
 self.set_home_position() method to set global home. Explain briefly how you accomplished this in your code.
+`def read_home_position(self,filename):`
 1. Open data-file
 2. Read and split the first line without \n: `line = f.readline()[:-1].split(",")`
 3. Split each of two peaces to get float position values: `lat0, lon0 = [float(l.split(" ")[-1]) for l in line]`
 4. Close file. 
 Could be done with *pandas*, but this package isn't included in FCND-environment.
+
+        lat0, lon0, alt0 = self.read_home_position(filename)
+        self.set_home_position(lon0, lat0, alt0)        
 
 #### 2. Set your current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
@@ -78,7 +82,8 @@ Here as long as you successfully determine your local position relative to globa
     """
     `
 2. Create the graph with the weight of the edges set to the Euclidean distance between the points
-        `G = nx.Graph()
+        
+	G = nx.Graph()
         for e in edges:
             p1 = tuple(e[0])
             p2 = tuple(e[1])
@@ -88,7 +93,20 @@ Here as long as you successfully determine your local position relative to globa
 This is another step in adding flexibility to the start location. As long as it works you're good to go!
 
 #### 4. Set grid goal position from geodetic coords
-This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map and have it rendered to a goal location on the grid.
+This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map 
+and have it rendered to a goal location on the grid.
+*class Sample()* (extracts polygons from obstacle data) includes 
+1. static method *random_sample* to sample 3D random Points
+	
+	goal_ne = Sampler.random_sample(data, TARGET_ALTITUDE, 1,False)
+
+2. place random start and goal points on graph:
+
+	north_min = Sampler.datalimits(data)[0]
+        east_min = Sampler.datalimits(data)[2]
+	start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
+        goal_v = (goal_ne[0][0] - north_min, goal_ne[0][1] - east_min)
+        gr_start, gr_goal = start_goal_graph(G, start_v, goal_v)`
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 Minimal requirement here is to modify the code in planning_utils() to update the A* implementation to include diagonal motions on the grid that have a cost of sqrt(2), but more creative solutions are welcome. Explain the code you used to accomplish this step.

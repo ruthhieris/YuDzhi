@@ -113,7 +113,7 @@ class MotionPlanning(Drone):
         data = msgpack.dumps(self.waypoints)
         self.connection._master.write(data)
 
-    def set_home_position(self, filename):
+    def read_home_position(self, filename):
         # TODO: read lat0, lon0 from colliders into floating point values
         #filename = 'colliders.csv'
         f = open(filename)
@@ -133,7 +133,8 @@ class MotionPlanning(Drone):
         filename = 'colliders.csv'
         self.target_position[2] = TARGET_ALTITUDE
         # TODO: set home position to (lon0, lat0, 0)
-        self.global_home = self.set_home_position(filename)        
+        lat0, lon0, alt0 = self.read_home_position(filename)
+        self.set_home_position(lon0,lat0,alt0)        
 
         # TODO: retrieve current global position
         self.global_position = [self._latitude, self._longitude, self._altitude]
@@ -142,8 +143,6 @@ class MotionPlanning(Drone):
         
         print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
                                                                          self.local_position))
-        
-       
             
         # Read in obstacle map
         data = np.loadtxt(filename, delimiter=',', dtype='Float64', skiprows=2)
@@ -167,21 +166,19 @@ class MotionPlanning(Drone):
             dist = np.linalg.norm(np.array(p2) - np.array(p1))
             G.add_edge(p1, p2, weight=dist)
 
-
         # Define starting point on the grid (this is just grid center)
         #grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center
         
-        
-        
-        
-        
-        grid_start = self.local_position
+        start_ne = self.local_position
+        #start_ne = Sampler.random_sample(data, flight_altitude, 1)
         # Set goal as some arbitrary position on the grid
         #grid_goal = (-north_offset + 10, -east_offset + 10)
-        #Define a start and goal location
+        #Define a start and goal location   
         
-        #start_ne = Sampler.random_sample(data, flight_altitude, 1)
+        # TODO: adapt to set goal as latitude / longitude position and convert
+        #Modify this to be set as some arbitrary position on the grid given 
+        #any geodetic coordinates (latitude, longitude)
         goal_ne = Sampler.random_sample(data, TARGET_ALTITUDE, 1,False)
         #print("RandomStart", start_ne, "RandomGoal", goal_ne)
         
@@ -190,17 +187,15 @@ class MotionPlanning(Drone):
         north_min = Sampler.datalimits(data)[0]
         east_min = Sampler.datalimits(data)[2]
         
-        #start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
+        start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
         goal_v = (goal_ne[0][0] - north_min, goal_ne[0][1] - east_min)
         
         gr_start, gr_goal = start_goal_graph(G, start_v, goal_v)
         
-        # TODO: adapt to set goal as latitude / longitude position and convert
-
         # Run A* to find a path from start to goal
         # TODO: add diagonal motions with a cost of sqrt(2) to your A* implementation
         # or move to a different search space such as a graph (not done here)
-        print('Local Start and Goal: ', grid_start, grid_goal)
+        print('Local Start and Goal: ', gr_start, gr_goal)
         path, _ = a_star(grid, heuristic, grid_start, grid_goal)
         # TODO: prune path to minimize number of waypoints
         # TODO (if you're feeling ambitious): Try a different approach altogether!

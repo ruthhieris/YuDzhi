@@ -57,23 +57,51 @@ Here's | A | Snappy | Table
 Here students should read the first line of the csv file, extract lat0 and lon0 as floating point values and use the 
 self.set_home_position() method to set global home. Explain briefly how you accomplished this in your code.
 1. Open data-file
-1. Read and split the first line without \n: 'line = f.readline()[:-1].split(",")'
-1. Split each of two peaces to get float position values: 'lat0, lon0 = [float(l.split(" ")[-1]) for l in line]'
-1. Close file. 
-Could be done with 'pandas', but this package isn't included in FCND-environment.
+2. Read and split the first line without \n: `line = f.readline()[:-1].split(",")`
+3. Split each of two peaces to get float position values: `lat0, lon0 = [float(l.split(" ")[-1]) for l in line]`
+4. Close file. 
+Could be done with *pandas*, but this package isn't included in FCND-environment.
 
 #### 2. Set your current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
 
-
-Meanwhile, here's a picture of me flying through the trees!
-![Forest Flying](./misc/in_the_trees.png)
+1. Retrieve current global position `self.global_position = [self._latitude, self._longitude, self._altitude]`
+2. Use `utm.from_latlon` in utility method global_to_local(global_position, global_home)
+3. Convert Gl to Loc position `self.local_position = global_to_local(self.global_position, self.global_home)`
 
 #### 3. Set grid start position from local position
+1. `def create_grid_and_edges(data, drone_altitude, safety_distance):
+    """
+    Returns a grid representation of a 2D configuration space
+    along with Voronoi graph edges given obstacle data and the
+    drone's altitude.
+    """
+    `
+2. Create the graph with the weight of the edges set to the Euclidean distance between the points
+        `G = nx.Graph()
+        for e in edges:
+            p1 = tuple(e[0])
+            p2 = tuple(e[1])
+            dist = np.linalg.norm(np.array(p2) - np.array(p1))
+            G.add_edge(p1, p2, weight=dist)`
+
 This is another step in adding flexibility to the start location. As long as it works you're good to go!
 
 #### 4. Set grid goal position from geodetic coords
-This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map and have it rendered to a goal location on the grid.
+This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map 
+and have it rendered to a goal location on the grid.
+*class Sample()* (extracts polygons from obstacle data) includes 
+1. static method *random_sample* to sample 3D random Points
+	
+	goal_ne = Sampler.random_sample(data, TARGET_ALTITUDE, 1,False)
+
+2. place random start and goal points on graph:
+
+	north_min = Sampler.datalimits(data)[0]
+        east_min = Sampler.datalimits(data)[2]
+	start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
+        goal_v = (goal_ne[0][0] - north_min, goal_ne[0][1] - east_min)
+        gr_start, gr_goal = start_goal_graph(G, start_v, goal_v)`
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 Minimal requirement here is to modify the code in planning_utils() to update the A* implementation to include diagonal motions on the grid that have a cost of sqrt(2), but more creative solutions are welcome. Explain the code you used to accomplish this step.
@@ -94,4 +122,9 @@ It works!
 For an extra challenge, consider implementing some of the techniques described in the "Real World Planning" lesson. You could try implementing a vehicle model to take dynamic constraints into account, or implement a replanning method to invoke if you get off course or encounter unexpected obstacles.
 
 And here is a lovely picture of our downtown San Francisco environment from above!
-![Map of SF](./misc/map.png)
+![Probabilistic_gr](./planning_im/im_Prob_graph_time.png)
+
+Meanwhile, here's a picture of me flying through the trees!
+![Probabilistic_m](./planning_im/im_Prob_map.png)
+![Voronoi_gr](./planning_im/im_Vor_graph_time.png)
+![Voronoi_m](./planning_im/im_Vor_map.png)

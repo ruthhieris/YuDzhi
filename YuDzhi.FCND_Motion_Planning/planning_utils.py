@@ -28,6 +28,24 @@ def global_to_local(global_position, global_home):
     
     return local_position
 
+def local_to_global(local_position, global_home):
+    """
+    converting a local position (north, east, down) relative to the home position 
+    to a global position (long, lat, _up_)
+    INPUT: [N,E,D]
+    OUTPUT: [Lon,Lat,Alt]
+    """
+    (east_home, north_home, zone_number, zone_letter) = utm.from_latlon(
+                                                        global_home[1], global_home[0])
+    
+    (lat, lon) = utm.to_latlon(east_home + local_position[1],
+                               north_home + local_position[0], zone_number,
+                               zone_letter)
+                               
+    global_position = np.array([lon, lat, -(local_position[2]-global_home[2])])
+    
+    return global_position
+
 def create_grid(data, drone_altitude, safety_distance):
     """
     Returns a grid representation of a 2D configuration space
