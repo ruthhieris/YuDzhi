@@ -60,14 +60,19 @@ def plan_path(self):
     self.target_position[2] = TARGET_ALTITUDE
     #VORONOI, MEDIAL_AXIS, PROBABILISTIC
     self.search_alg = SearchAlg.VORONOI
-    ```
+   ```
 
 #### 1. Set your global home position
 Here students should read the first line of the csv file, extract lat0 and lon0 as floating point values and use the 
 self.set_home_position() method to set global home. Explain briefly how you accomplished this in your code.
 `def read_home_position(self,filename):`
 1. Open data-file
-2. Read and split the first line without \n: `line = f.readline()[:-1].split(",")`
+2. Read and split the first line without end_of_line symbol: 
+
+```python
+line = f.readline()[:-1].split(",")
+```
+
 3. Split each of two peaces to get float position values: `lat0, lon0 = [float(l.split(" ")[-1]) for l in line]`
 4. Close file. 
 5. return lon0, lat0, alt0
@@ -78,7 +83,7 @@ Could be done with *pandas*, but this package isn't included in FCND-environment
 #### 2. Set your current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
 
-1. Retrieve current global position `cur_gl_lon, cur_gl_lat, cur_gl_alt = self.global_position()`
+1. Retrieve current global position `local_position = global_to_local(self.global_position, self.global_home)`
 2. Use `utm.from_latlon` in utility method global_to_local(global_position, global_home)
 3. Convert Gl to Loc position `self.local_position = global_to_local(self.global_position, self.global_home)`
 
@@ -110,6 +115,29 @@ Here as long as you successfully determine your local position relative to globa
     ```python
     skeleton = medial_axis(invert(grid))
     ```
+    
+3. Probabilistic map:
+    
+    ```python
+         elif self.search_alg == SearchAlg.PROBABILISTIC:
+            
+            num_samp = 1000
+            sampler = Sampler(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
+
+            start = (start_v[0] + nmin, start_v[1] + emin, start_v[2])
+            goal = (goal_v[0] + nmin, goal_v[1] + emin, goal_v[2])
+            polygons = sampler._polygons
+	```
+	
+      sampling points and removin ones conflicting with obstacles:
+	
+	```python
+	nodes = sampler.sample(num_samp)
+            nearest_neighbors = 10
+
+            g = create_graph(nodes, nearest_neighbors, polygons)
+	```
+	
 This is another step in adding flexibility to the start location. As long as it works you're good to go!
 
 #### 4. Set grid goal position from geodetic coords
@@ -123,21 +151,47 @@ and have it rendered to a goal location on the grid.
     ```
 
 2. place random start and goal points on graph:
-    1. Voronoi:
+    1. Voronoi: `graph_start, graph_goal = start_goal_graph(G, start_v, goal_v)`
 
     ```python
-    	north_min = Sampler.datalimits(data)[0]
-            east_min = Sampler.datalimits(data)[2]
-    	start_v = (start_ne[0][0] - north_min, start_ne[0][1] - east_min)
-            goal_v = (goal_ne[0][0] - north_min, goal_ne[0][1] - east_min)
-            gr_start, gr_goal = start_goal_graph(G, start_v, goal_v)
-            ```
+    	def start_goal_graph(G, start, goal):
+	    gr_start = point_on_graph(G, start)
+	    gr_goal = point_on_graph(G, goal)
+	    return gr_start, gr_goal
+
+	def point_on_graph(G, point):
+	    """Project point onto Graph
+	    INPUT: G = networkx.Graph()
+		    point = (x,y)
+	    OUTPUT: gr_point = (x,y)"""
+	    if G.has_node(point):
+		gr_point = point
+	    else:
+		graph_points = np.array(G.nodes)
+		print(graph_points.shape, type(graph_points[1]),graph_points[1],'p2',point[2])
+		if graph_points.shape[1] < 3:
+		    graph_points_3D = np.zeros((graph_points.shape[0],3))
+		    for ind in range(graph_points.shape[0]):
+			graph_points_3D[ind] = np.append(graph_points[ind], point[2])
+		    point_addr = np.linalg.norm(np.array(point) - graph_points_3D,axis = 1).argmin()
+		    gr_point = tuple(graph_points_3D[point_addr])
+
+		    return gr_point[0:2]
+
+		else: 
+		    point_addr = np.linalg.norm(np.array(point) - graph_points,axis = 1).argmin()
+		    gr_point = tuple(graph_points[point_addr])
+
+		    return gr_point
+     ```
 
     2. Medial_Axis:
 
     ```python
         skel_start, skel_goal = find_start_goal_skeleton(skeleton, start_v, goal_v)
-        ```
+      ```
+    3. Probabilistic: `prob_start, prob_goal = start_goal_graph(g, start, goal)`
+
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 Minimal requirement here is to modify the code in planning_utils() to update the A* implementation to include diagonal motions on the grid that have a cost of sqrt(2), but more creative solutions are welcome. Explain the code you used to accomplish this step.
@@ -244,6 +298,7 @@ For this step you can use a collinearity test or ray tracing method like Bresenh
 
 ### Execute the flight
 #### 1. Does it work?
+
 Modified `local_posistion_callback` - add case `Failed to find a path`:
 ```python    
         def local_position_callback(self):
