@@ -57,6 +57,7 @@ Here's | A | Snappy | Table
 class SearchAlg(Enum):
     VORONOI = auto()
     MEDIAL_AXIS = auto()
+    PROBABILISTIC = auto()
 
 def plan_path(self):
     self.flight_state = States.PLANNING
@@ -65,7 +66,7 @@ def plan_path(self):
     SAFETY_DISTANCE = 3
     filename = 'colliders.csv'
     self.target_position[2] = TARGET_ALTITUDE
-    #VORONOI, MEDIAL_AXIS
+    #VORONOI, MEDIAL_AXIS, PROBABILISTIC
     self.search_alg = SearchAlg.VORONOI
     ```
 
