@@ -88,10 +88,14 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
     omega_sqr[3] = (c_bar - p_bar + r_bar - q_bar) / 4.f;
     omega_sqr[2] = (c_bar + p_bar - r_bar - q_bar) / 4.f;
 
-    cmd.desiredThrustsN[0] = CONSTRAIN(omega_sqr[0], minMotorThrust, maxMotorThrust); // front left
-    cmd.desiredThrustsN[1] = CONSTRAIN(omega_sqr[1], minMotorThrust, maxMotorThrust); // front right
-    cmd.desiredThrustsN[2] = CONSTRAIN(omega_sqr[2], minMotorThrust, maxMotorThrust); // rear left
-    cmd.desiredThrustsN[3] = CONSTRAIN(omega_sqr[3], minMotorThrust, maxMotorThrust); // rear rightt
+    cmd.desiredThrustsN[0] = omega_sqr[0];
+    cmd.desiredThrustsN[1] = omega_sqr[1]; // front right
+    cmd.desiredThrustsN[2] = omega_sqr[2]; // rear left
+    cmd.desiredThrustsN[3] = omega_sqr[3]; // rear rightt
+//    cmd.desiredThrustsN[0] = CONSTRAIN(omega_sqr[0], minMotorThrust, maxMotorThrust); // front left
+//    cmd.desiredThrustsN[1] = CONSTRAIN(omega_sqr[1], minMotorThrust, maxMotorThrust); // front right
+//    cmd.desiredThrustsN[2] = CONSTRAIN(omega_sqr[2], minMotorThrust, maxMotorThrust); // rear left
+//    cmd.desiredThrustsN[3] = CONSTRAIN(omega_sqr[3], minMotorThrust, maxMotorThrust); // rear rightt
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return cmd;
@@ -167,8 +171,8 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
     }
     else
     {
-        pqrCmd.x = 0.0;
-        pqrCmd.y = 0.0;
+        pqrCmd.x = 0.f;
+        pqrCmd.y = 0.f;
     }
         pqrCmd.z = 0.f;
     
