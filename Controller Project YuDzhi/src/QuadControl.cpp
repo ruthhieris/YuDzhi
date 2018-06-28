@@ -248,13 +248,17 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-	V3F acc_v_term = kpVelXY * (velCmd - vel);
     if (velCmd.magXY() > maxSpeedXY)
     {
-        velCmd *= maxSpeedXY / velCmd.magXY();
+        velCmd = velCmd * maxSpeedXY / velCmd.magXY();
     }
     V3F acc_p_term = kpPosXY * (posCmd - pos);
-    accelCmd = acc_p_term + acc_v_term + accelCmdFF;
+	//if (acc_p_term.magXY() > maxSpeedXY)
+	//{
+	//	acc_p_term = acc_p_term * maxSpeedXY / acc_p_term.magXY();
+	//}
+	V3F acc_v_term = kpVelXY * (velCmd - vel);
+	accelCmd = acc_p_term + acc_v_term + accelCmdFF;
     
     if (accelCmd.magXY() > maxAccelXY)
     {

@@ -98,7 +98,7 @@
     <ProjectGuid>{D8435B4A-B444-4C1B-ABC8-6D1C779B268D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Simulator</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -186,6 +186,7 @@
       <AdditionalIncludeDirectories>../lib/freeglut/include;../src;../lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);WIN32</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
+      <AdditionalOptions>/Y %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

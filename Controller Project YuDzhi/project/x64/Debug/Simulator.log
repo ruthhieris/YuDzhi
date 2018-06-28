@@ -1,0 +1,6 @@
+﻿  Скопировано файлов: 0.
+cl : командная строка warning D9002: пропуск неизвестного параметра "/Y"
+  QuadControl.cpp
+e:\jtricks_work\005 - python\yudzhi\controller project yudzhi\src\quadcontrol.cpp(79): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+e:\jtricks_work\005 - python\yudzhi\controller project yudzhi\src\quadcontrol.cpp(80): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+  Simulator.vcxproj -> E:\JTricks_Work\005 - Python\YuDzhi\Controller Project YuDzhi\project\x64\Debug\Simulator.exe
