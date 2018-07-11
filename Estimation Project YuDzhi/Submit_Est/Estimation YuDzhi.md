@@ -1,65 +1,67 @@
 ## Project: Building an Estimator
 
 ---
+_[x, y, z, x_dot, y_dot, z_dot, yaw]_ - EKF
+_[p, q, r]_ - Gyro measurements 
+_[roll, pitch]_ - Complementary Filter
 
-
+*u = [xddot_Bfr, yddot_Bfr, zddot_Bfr, yaw_dot]* 
+As control imput use Accelerometer -> [xddot_Bfr, yddot_Bfr, zddot_Bfr]
+                    Rate Gyro -> yaw_dot
+                    
 ### Determine the standard deviation of the measurement noise of both GPS X data and Accelerometer X data.
 
-#### The calculated standard deviation should correctly capture ~68% of the sensor measurements. Your writeup should describe the method used for determining the standard deviation given the simulated sensor measurements.
+#### The calculated standard deviation should correctly capture  of approximately 68% the sensor measurements. Your writeup should describe the method used for determining the standard deviation given the simulated sensor measurements.
 
-Used pandas library  (`ExtractingStd.py`):
+1. Used pandas library to get sample standard deviation over requested axis. (`ExtractingStd.py`):
 ```python
 
     def find_std(csv_name):
         df = pd.read_csv(csv_name, delimiter = ',', header = 0, usecols = [1], parse_dates=True)
         data_std = df.std()
         return data_std
-```
-Got  
-Quad.GPS.X    0.717478   
-Quad.IMU.AX    0.511142
+    ```
+  
+Quad.GPS.X   | Quad.IMU.AX 
+-------------|-------------   
+0.717478     |  0.511142
 
+### Implement a better rate gyro attitude integration scheme in the UpdateFromIMU() function.
 
-### Implement roll pitch control in C++.
+#### The improved integration scheme should result in an attitude estimator of < 0.1 rad for each of the Euler angles for a duration of at least 3 seconds during the simulation. The integration scheme should use quaternions to improve performance over the current simple integration scheme.
 
-#### The controller should use the acceleration and thrust commands, in addition to the vehicle attitude to output a body rate command. The controller should account for the non-linear transformation from local accelerations to body rates. Note that the drone's mass should be accounted for when calculating the target angles.
-
-```cpp
-    float c = - collThrustCmd / mass;
+1. Improve a complementary filter-type attitude filter by replacing a small-angle approximation integration method, so that the current attitude estimate (rollEst, pitchEst and ekfState(6)) are used to integrate the body rates (`p = gyro.x`, `q = gyro.y`) into new Euler angles - nonlinear complementary filter.
     
-    if (collThrustCmd > 0.0)
-    {
-        float bcmdX_R13 = CONSTRAIN(accelCmd.x / c, - maxTiltAngle, maxTiltAngle);
-        float bcmdY_R23 = CONSTRAIN(accelCmd.y / c, - maxTiltAngle, maxTiltAngle);
-        
-        float bX_act = R(0,2);
-        float bY_act = R(1,2);
-        float bcmdX_dot = kpBank * (bcmdX_R13 - bX_act);
-        float bcmdY_dot = kpBank * (bcmdY_R23 - bY_act);
-        
-        pqrCmd.x = (R(1,0) * bcmdX_dot - R(0,0) * bcmdY_dot) / R(2,2);
-        pqrCmd.y = (R(1,1) * bcmdX_dot - R(0,1) * bcmdY_dot) / R(2,2);
-    }
-    else
-    {
-        pqrCmd.x = 0.f;
-        pqrCmd.y = 0.f;
-    }
-        pqrCmd.z = 0.f;
-```
+    1. use the `Quaternion` class, which has a `FromEuler123_RPY` function for creating an attitude `attEst` quaternion from Euler Roll/Pitch\Yaw. 
+    2. Quaternion function `IntegrateBodyRate_fast` defines dq to be the quaternion that consists of the measurement of the angular rates from the IMU in the body frame (`p = gyro.x`, `q = gyro.y`, `r = gyro.z`),and give a predicted quaternion, `predictedQt = dq * qt`
+    3. Extract predicted roll, pitch, yaw.
 
-### Implement altitude controller in C++
+    ```cpp
+        Quaternion<float> attEst = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, ekfState(6));
+        Quaternion<float> predictedQt = attEst.IntegrateBodyRate_fast(gyro.x, gyro.y, gyro.z, dtIMU / 2.f);
+        float predictedPitch = predictedQt.Pitch();
+        float predictedRoll = predictedQt.Roll();
+        ekfState(6) = predictedQt.Yaw();
+  ```
 
-#### The controller should use both the down position and the down velocity to command thrust. Ensure that the output value is indeed thrust (the drone's mass needs to be accounted for) and that the thrust includes the non-linear effects from non-zero roll/pitch angles.
-Additionally, the C++ altitude controller should contain an integrator to handle the weight non-idealities presented in scenario 4
-
+2. The integrated (predicted) value is then updated in a complementary filter style with attitude information from accelerometers
+Why use 
 ```cpp
-    float z_dot_cmd = kpPosZ * (posZCmd - posZ) + velZCmd;
-    z_dot_cmd = CONSTRAIN(z_dot_cmd, -maxAscentRate, maxDescentRate);
-    integratedAltitudeError += (posZCmd - posZ) * dt;
-    float u1_bar = kpVelZ * (z_dot_cmd - velZ) + KiPosZ * integratedAltitudeError + accelZCmd;
-    thrust = - mass * (u1_bar - 9.81f) / R(2,2);
+    accelPitch = atan2f(-accel.x, 9.81f);
 ```
+instead of 
+```cpp
+    accelPitch = asinf(accel.x, 9.81f);
+```
+???
+
+
+
+### Implement all of the elements of the prediction step for the estimator.
+
+#### The prediction step should include the state update element (`PredictState()` function), a correct calculation of the Rgb prime matrix, and a proper update of the state covariance. The acceleration should be accounted for as a command in the calculation of gPrime. The covariance update should follow the classic EKF update equation.
+
+1. dt is the time duration for which you should predict. It will be very short (on the order of 1ms), so simplistic integration methods are fine here
 
 ### Implement lateral position control in C++.
 

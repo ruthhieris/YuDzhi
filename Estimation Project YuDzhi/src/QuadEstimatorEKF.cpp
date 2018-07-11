@@ -2,7 +2,7 @@
 #include "QuadEstimatorEKF.h"
 #include "Utility/SimpleConfig.h"
 #include "Utility/StringUtils.h"
-#include "Math/Quaternion.h"
+#include <Math/Quaternion.h>
 
 using namespace SLR;
 
@@ -89,13 +89,18 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   //       (Quaternion<float> also has a IntegrateBodyRate function, though this uses quaternions, not Euler angles)
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-  // SMALL ANGLE GYRO INTEGRATION:
+  // NONLINEAR COMPLEMENTARY FILTER:
   // (replace the code below)
   // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
-
-  float predictedPitch = pitchEst + dtIMU * gyro.y;
-  float predictedRoll = rollEst + dtIMU * gyro.x;
-  ekfState(6) = ekfState(6) + dtIMU * gyro.z;	// yaw
+  Quaternion<float> attEst = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, ekfState(6));
+  Quaternion<float> predictedQt = attEst.IntegrateBodyRate_fast(gyro.x, gyro.y, gyro.z, dtIMU / 2.f);
+    float predictedPitch = predictedQt.Pitch();
+    float predictedRoll = predictedQt.Roll();
+    ekfState(6) = predictedQt.Yaw();
+    
+    //  float predictedPitch = pitchEst + dtIMU * gyro.y;
+    //  float predictedRoll = rollEst + dtIMU * gyro.x;
+    //  ekfState(6) = ekfState(6) + dtIMU * gyro.z;    // yaw
 
   // normalize yaw to -pi .. pi
   if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
@@ -106,6 +111,8 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   // CALCULATE UPDATE
   accelRoll = atan2f(accel.y, accel.z);
   accelPitch = atan2f(-accel.x, 9.81f);
+    //Why not?//
+    //accelPitch = asinf(accel.x, 9.81f);
 
   // FUSE INTEGRATION AND UPDATE
   rollEst = attitudeTau / (attitudeTau + dtIMU) * (predictedRoll)+dtIMU / (attitudeTau + dtIMU) * accelRoll;
@@ -152,7 +159,7 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   //   return the predicted state as a vector
 
   // HINTS 
-  // - dt is the time duration for which you should predict. It will be very short (on the order of 1ms)
+  // - \dt is the time duration for which you should predict. It will be very short (on the order of 1ms),
   //   so simplistic integration methods are fine here
   // - we've created an Attitude Quaternion for you from the current state. Use 
   //   attitude.Rotate_BtoI(<V3F>) to rotate a vector from body frame to inertial frame
@@ -161,7 +168,11 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   Quaternion<float> attitude = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, curState(6));
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
+    V3F state_dot = attitude.Rotate_BtoI(gyro);
+    predictedState[0] = curState[0] + state_dot[0] * dt;
+    predictedState[1] = curState[1] + state_dot[1] * dt;
+    predictedState[6] = ekfState[6];
+    
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
