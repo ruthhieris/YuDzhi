@@ -168,12 +168,16 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   Quaternion<float> attitude = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, curState(6));
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-    V3F state_dot = attitude.Rotate_BtoI(gyro);
-    predictedState[0] = curState[0] + state_dot[0] * dt;
-    predictedState[1] = curState[1] + state_dot[1] * dt;
-    predictedState[6] = ekfState[6];
+    V3F accel_Ifr = attitude.Rotate_BtoI(accel);
+    V3F gyro_Ifr = attitude.Rotate_BtoI(gyro);
+    predictedState[0] = curState[0] + curState[3] * dt; // x_pred = x_t + xdot_t * dt
+    predictedState[1] = curState[1] + curState[4] * dt; // y_pred = y_t + ydot_t * dt
+    predictedState[2] = curState[2] + curState[5] * dt; // z_pred = z_t + zdot_t * dt
+    predictedState[3] = curState[3] + accel_Ifr.x * dt; // xdot_pred = xdot_t + xddot_t * dt
+    predictedState[4] = curState[4] + accel_Ifr.y * dt; // ydot_pred = ydot_t + yddot_t * dt
+    predictedState[5] = curState[5] - 9.81f * dt + accel_Ifr.z * dt; // zdot_pred = zdot_t + zddot_t * dt
+    predictedState[6] = gyro_Ifr.z;
     
-
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return predictedState;
@@ -199,8 +203,16 @@ MatrixXf QuadEstimatorEKF::GetRbgPrime(float roll, float pitch, float yaw)
   //   that your calculations are reasonable
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
-
+    RbgPrime(0,0) = - cos(pitch) * sin(yaw);
+    RbgPrime(0,1) = - sin(roll) * sin(pitch) * sin(yaw) - cos(roll) * cos(yaw);
+    RbgPrime(0,2) = - cos(roll) * sin(pitch) * sin(yaw) + sin(roll) * cos(yaw);
+    RbgPrime(1,0) = cos(pitch) * cos(yaw);
+    RbgPrime(1,1) = sin(roll) * sin(pitch) * cos(yaw) - cos(roll) * sin(yaw);
+    RbgPrime(1,2) = cos(roll) * sin(pitch) * cos(yaw) + sin(roll) * sin(yaw);
+    RbgPrime(2,0) = 0.f;
+    RbgPrime(2,1) = 0.f;
+    RbgPrime(2,2) = 0.f;
+    
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return RbgPrime;

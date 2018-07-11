@@ -62,6 +62,27 @@ instead of
 #### The prediction step should include the state update element (`PredictState()` function), a correct calculation of the Rgb prime matrix, and a proper update of the state covariance. The acceleration should be accounted for as a command in the calculation of gPrime. The covariance update should follow the classic EKF update equation.
 
 1. dt is the time duration for which you should predict. It will be very short (on the order of 1ms), so simplistic integration methods are fine here
+  // - we've created an Attitude Quaternion for you from the current state. Use 
+  //   attitude.Rotate_BtoI(<V3F>) to rotate a vector from body frame to inertial frame
+  // - the yaw integral is already done in the IMU update. Be sure not to integrate it again here
+  Then the transition function
+
+```cpp
+    V3F accel_Ifr = attitude.Rotate_BtoI(accel);
+    V3F gyro_Ifr = attitude.Rotate_BtoI(gyro);
+    predictedState[0] = curState[0] + curState[3] * dt; // x_pred = x_t + xdot_t * dt
+    predictedState[1] = curState[1] + curState[4] * dt; // y_pred = y_t + ydot_t * dt
+    predictedState[2] = curState[2] + curState[5] * dt; // z_pred = z_t + zdot_t * dt
+    predictedState[3] = curState[3] + accel_Ifr.x * dt; // xdot_pred = xdot_t + xddot_t * dt
+    predictedState[4] = curState[4] + accel_Ifr.y * dt; // ydot_pred = ydot_t + yddot_t * dt
+    predictedState[5] = curState[5] - 9.81f * dt + accel_Ifr.z * dt; // zdot_pred = zdot_t + zddot_t * dt
+    predictedState[6] = gyro_Ifr.z;
+```
+
+2. In QuadEstimatorEKF.cpp, calculate the partial derivative of the body-to-global rotation matrix in the function GetRbgPrime(). Once you have that function implement, implement the rest of the prediction step (predict the state covariance forward) in Predict().
+
+
+
 
 ### Implement lateral position control in C++.
 
