@@ -37,8 +37,7 @@ struct TrajectoryPoint {
     position(0.f, 0.f, 0.f),
     velocity(0.f, 0.f, 0.f),
     omega(0.f, 0.f, 0.f),
-    attitude(0.f, 0.f, 0.f, 0.f),
-	accel(0.f, 0.f, 0.f)
+    attitude(0.f, 0.f, 0.f, 0.f)
   {
   }
 };

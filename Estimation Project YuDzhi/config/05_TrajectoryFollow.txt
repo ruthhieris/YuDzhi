@@ -13,7 +13,7 @@ Quad.ControlType = QuadControl
 Quad.ControlConfig = QuadControlParams
 
 # reference trajectory (just the starting position)
-QuadControlParams.Trajectory=traj/FigureEightFFgra.txt
+QuadControlParams.Trajectory=traj/FigureEight.txt
 
 # graphing commands
 Commands.1=AddGraph1.Quad1.PosFollowErr

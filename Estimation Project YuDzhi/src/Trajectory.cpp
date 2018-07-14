@@ -80,10 +80,9 @@ void Trajectory::ParseLine(const string& filename, const string& s)
   TrajectoryPoint traj_pt;
 
   V3F ypr; // Helper variable to read in yaw, pitch and roll
-  sscanf(s.c_str(), "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f", &traj_pt.time,
+  sscanf(s.c_str(), "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f", &traj_pt.time, 
 		&traj_pt.position.x, &traj_pt.position.y, &traj_pt.position.z, 
-		&traj_pt.velocity.x, &traj_pt.velocity.y, &traj_pt.velocity.z,
-        &traj_pt.accel.x, &traj_pt.accel.y, &traj_pt.accel.z,
+		&traj_pt.velocity.x, &traj_pt.velocity.y, &traj_pt.velocity.z, 
 		&ypr[0], &ypr[1], &ypr[2], &traj_pt.omega.x, &traj_pt.omega.y, &traj_pt.omega.z);
 
   // Convert yaw, pitch, and roll to an attitude quaternion
@@ -188,11 +187,9 @@ void Trajectory::WriteTrajectoryPointToFile(FILE* f, TrajectoryPoint traj_pt)
 
   // Write the trajectory point to file
   V3D ypr = traj_pt.attitude.ToEulerYPR();
-  fprintf (f, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
-           (double)traj_pt.time, \
+  fprintf (f, "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n", (double)traj_pt.time, \
 		(double)traj_pt.position.x, (double)traj_pt.position.y, (double)traj_pt.position.z, 
 		(double)traj_pt.velocity.x, (double)traj_pt.velocity.y, (double)traj_pt.velocity.z,
-        (double)traj_pt.accel.x, (double)traj_pt.accel.y, (double)traj_pt.accel.z,
 		ypr[0], ypr[1], ypr[2], (double)traj_pt.omega.x, 
 		(double)traj_pt.omega.y, (double)traj_pt.omega.z);
 
