@@ -1,9 +1,21 @@
 ## Project: Building an Estimator
 
 ---
-*[x, y, z, x_dot, y_dot, z_dot, yaw]* - EKF
-*[p, q, r]* - Gyro measurements 
-*[roll, pitch]* - Complementary Filter
+# Resubmission
+![Retuned Magnetometer](./estimation_im/RetunedMagnetometer.png)
+
+improved estimator parameter tuning in `QuadEstimatorEKF.txt` to decrease the magnetometer error as suggested
+```cpp
+QPosXYStd = .01
+QPosZStd = .02
+QVelXYStd = .06
+QVelZStd = .1
+QYawStd = .09
+```
+
+EKF | Gyro | Complementary Filter
+-----|-------|---------------------------
+*[x, y, z, x_dot, y_dot, z_dot, yaw]*  | *[p, q, r]*  | *[roll, pitch]* - Complementary Filter
 
 *u = [xddot_Bfr, yddot_Bfr, zddot_Bfr, yaw_dot]* 
 As control input use Accelerometer -> [xddot_Bfr, yddot_Bfr, zddot_Bfr]
